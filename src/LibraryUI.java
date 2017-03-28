@@ -103,15 +103,15 @@ public class LibraryUI extends JFrame {
                         .addGap(42, 42, 42)
                         .addComponent(titleField))
                     .addGroup(jPanel1Layout.createSequentialGroup()
+                        .addComponent(catLabel)
+                        .addGap(35, 35, 35)
+                        .addComponent(catComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addComponent(idErrorLabel)
                             .addComponent(catErrorLabel)
                             .addComponent(titleErrorLabel))
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addComponent(catLabel)
-                        .addGap(35, 35, 35)
-                        .addComponent(catComboBox, 0, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                        .addGap(0, 0, Short.MAX_VALUE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -135,7 +135,7 @@ public class LibraryUI extends JFrame {
                     .addComponent(titleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
                 .addComponent(titleErrorLabel)
-                .addContainerGap(81, Short.MAX_VALUE))
+                .addContainerGap(86, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -169,15 +169,14 @@ public class LibraryUI extends JFrame {
     }//GEN-LAST:event_cancelButtonActionPerformed
 
     private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
-        idErrorLabel.setText("");
+        idErrorLabel.setText("");       //clearing possible previous errors
         catErrorLabel.setText("");
         titleErrorLabel.setText("");
         
         if (noErrorsFrame1()) {
-            
+            //All fields are good, make new frame
         }
         else {
-            //System.out.println("Error detected");
             if (catComboBox.getSelectedIndex() <= 0) {
                 catErrorLabel.setText("*Error! Please select a category.");
             }
@@ -185,7 +184,7 @@ public class LibraryUI extends JFrame {
             if (titleField.getText().trim().equals("")) {
                 titleErrorLabel.setText("*Error! Title field is required.");
             }
-            else if (!find_book(titleField.getText())) {
+            else if (!find_book(titleField.getText().trim())) {
                 titleErrorLabel.setText("*Error! Book with that title for this category not found.");
             }
             
@@ -240,6 +239,7 @@ public class LibraryUI extends JFrame {
             public void run() {
                 LibraryUI frame = new LibraryUI();
                 frame.setVisible(true);
+                frame.setTitle("EECS3421 Library");
                 frame.fetch_categories();
             }
         });   
@@ -295,7 +295,6 @@ public class LibraryUI extends JFrame {
             querySt.setString(2, t);
             answers = querySt.executeQuery();
 
-            System.out.println(answers.toString());
             while (answers.next()) {
                 inDB = true;
                 l_title = answers.getString("title");
@@ -303,7 +302,7 @@ public class LibraryUI extends JFrame {
                 language = answers.getString("language");
                 weight = answers.getInt("weight");
 
-                System.out.println (l_title + " " + year + " " + language + " " + weight);
+                //System.out.println (l_title + " " + year + " " + language + " " + weight);
             }
             answers.close();
             querySt.close();
@@ -351,13 +350,13 @@ public class LibraryUI extends JFrame {
     
     public boolean noErrorsFrame1() {
         //checks to see if there are errors in the first page
-        boolean result = catComboBox.getSelectedIndex() != 0 &&
+        boolean result = catComboBox.getSelectedIndex() > 0 &&
                          !titleField.getText().trim().equals("") &&
                          !idField.getText().trim().equals("") && 
                          find_customer(Integer.parseInt(idField.getText())) &&
                          find_book(titleField.getText());
                          
-        return false;
+        return result;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
