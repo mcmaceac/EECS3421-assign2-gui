@@ -13,6 +13,32 @@ import java.sql.*;
 import java.util.ArrayList;
 import javax.swing.*;
 public class LibraryUI extends JFrame {
+    
+    class Book {
+        public String title;
+        public int year;
+        public String language;
+        public int weight;
+
+        public Book (String t, int y, String l, int w) {
+            title = t;
+            year = y;
+            language = l;
+            weight = w;
+        }
+    }
+    
+    class Customer {
+        public int cid;
+        public String name;
+        public String city;
+
+        public Customer (int id, String n, String c) {
+            cid = id;
+            name = n;
+            city = c;
+        }
+    }
 
     private static Connection conDB; 	//Connection to the database system.
     private static String url; 		//URL: Which database?
@@ -22,7 +48,7 @@ public class LibraryUI extends JFrame {
     private static String custCity;
     
     private static String category;
-    private static String title;
+    //private static String title;
     
     /**
      * Creates new form LibraryUI
@@ -182,7 +208,7 @@ public class LibraryUI extends JFrame {
 
         if (noErrorsFrame1()) {
             //All fields are good, display book in jtable
-            
+            //Book[] books = find_book(titleField.getText().trim());
         }
         else {
             if (catComboBox.getSelectedIndex() <= 0) {
@@ -192,7 +218,7 @@ public class LibraryUI extends JFrame {
             if (titleField.getText().trim().equals("")) {
                 titleErrorLabel.setText("*Error! Title field is required.");
             }
-            else if (!find_book(titleField.getText().trim())) {
+            else if (find_book(titleField.getText().trim(), catComboBox.getSelectedItem().toString()).length == 0) {
                 titleErrorLabel.setText("*Error! Book with that title for this category not found.");
             }
 
@@ -280,17 +306,20 @@ public class LibraryUI extends JFrame {
         }
     }
     
-    public boolean find_book (String t) {
+    public Book[] find_book (String t, String c) {
         String queryText = "";
         PreparedStatement querySt = null;
         ResultSet answers = null;
 
-        boolean inDB = false;
+        //boolean inDB = false;
 
-        String l_title;
+        String title;
         int year;
         String language;
         int weight;
+        
+        Book b = null;
+        ArrayList<Book> books = new ArrayList<Book>();
 
         queryText = 
                     "SELECT title, year, language, weight " + 
@@ -299,16 +328,19 @@ public class LibraryUI extends JFrame {
 
         try {
             querySt = conDB.prepareStatement (queryText);
-            querySt.setString(1, (String) catComboBox.getSelectedItem());
+            querySt.setString(1, c);
             querySt.setString(2, t);
             answers = querySt.executeQuery();
 
             while (answers.next()) {
-                inDB = true;
-                l_title = answers.getString("title");
+                //inDB = true;
+                title = answers.getString("title");
                 year = answers.getInt("year");
                 language = answers.getString("language");
                 weight = answers.getInt("weight");
+                
+                b = new Book(title, year, language, weight);
+                books.add(b);
 
                 //System.out.println (l_title + " " + year + " " + language + " " + weight);
             }
@@ -318,7 +350,10 @@ public class LibraryUI extends JFrame {
         catch (Exception e) {
             System.out.println(e.toString());
         }
-        return inDB;
+        
+        Book[] booksArray = new Book[books.size()];
+        booksArray = books.toArray(booksArray);
+        return booksArray;
     }
     
     public Customer find_customer(int cid) {
@@ -360,7 +395,7 @@ public class LibraryUI extends JFrame {
                          !titleField.getText().trim().equals("") &&
                          !idField.getText().trim().equals("") && 
                          find_customer(Integer.parseInt(idField.getText())) != null &&
-                         find_book(titleField.getText());
+                         find_book(titleField.getText(), catComboBox.getSelectedItem().toString()).length != 0;
                          
         return result;
     }
