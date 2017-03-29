@@ -8,8 +8,11 @@
  *
  * @author mcmaceac
  */
+import java.math.BigDecimal;
 import java.net.*;
 import java.sql.*;
+import java.sql.Timestamp;
+import java.util.Date;
 import java.util.ArrayList;
 import javax.swing.*;
 public class LibraryUI extends JFrame {
@@ -43,11 +46,11 @@ public class LibraryUI extends JFrame {
     private static Connection conDB; 	//Connection to the database system.
     private static String url; 		//URL: Which database?
     
-    private static int custID;
-    private static String custName;
-    private static String custCity;
+    private static String club;
     
-    private static String category;
+    private static int numBooks;
+    
+    //private static String category;
     //private static String title;
     
     /**
@@ -71,14 +74,24 @@ public class LibraryUI extends JFrame {
         idField = new javax.swing.JTextField();
         catLabel = new javax.swing.JLabel();
         catComboBox = new javax.swing.JComboBox();
-        jLabel1 = new javax.swing.JLabel();
+        titleLabel = new javax.swing.JLabel();
         titleField = new javax.swing.JTextField();
         idErrorLabel = new javax.swing.JLabel();
         catErrorLabel = new javax.swing.JLabel();
         titleErrorLabel = new javax.swing.JLabel();
-        nextButton = new javax.swing.JButton();
+        searchButton = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         bookTable = new javax.swing.JTable();
+        priceButton = new javax.swing.JButton();
+        priceErrorLabel = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        minPriceLabel = new javax.swing.JLabel();
+        purchasePanel = new javax.swing.JPanel();
+        numCopiesLabel = new javax.swing.JLabel();
+        calcTotalButton = new javax.swing.JButton();
+        numCopiesField = new javax.swing.JTextField();
+        purchaseButton = new javax.swing.JButton();
+        calcErrorLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -89,7 +102,7 @@ public class LibraryUI extends JFrame {
 
         catLabel.setText("Choose a category:");
 
-        jLabel1.setText("Enter a book title:");
+        titleLabel.setText("Enter a book title:");
 
         idErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
@@ -97,13 +110,13 @@ public class LibraryUI extends JFrame {
 
         titleErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
 
-        nextButton.setText("Search");
-        nextButton.setMaximumSize(new java.awt.Dimension(75, 25));
-        nextButton.setMinimumSize(new java.awt.Dimension(75, 25));
-        nextButton.setPreferredSize(new java.awt.Dimension(75, 25));
-        nextButton.addActionListener(new java.awt.event.ActionListener() {
+        searchButton.setText("Search");
+        searchButton.setMaximumSize(new java.awt.Dimension(75, 25));
+        searchButton.setMinimumSize(new java.awt.Dimension(75, 25));
+        searchButton.setPreferredSize(new java.awt.Dimension(75, 25));
+        searchButton.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                nextButtonActionPerformed(evt);
+                searchButtonActionPerformed(evt);
             }
         });
 
@@ -120,21 +133,91 @@ public class LibraryUI extends JFrame {
         ));
         jScrollPane1.setViewportView(bookTable);
 
+        priceButton.setText("Find Best Price");
+        priceButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                priceButtonActionPerformed(evt);
+            }
+        });
+
+        priceErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+        priceErrorLabel.setHorizontalTextPosition(javax.swing.SwingConstants.CENTER);
+
+        jLabel2.setText("Minimum price:");
+
+        purchasePanel.setBorder(javax.swing.BorderFactory.createLineBorder(new java.awt.Color(0, 0, 0)));
+
+        numCopiesLabel.setText("How many copies would you like? (Default is 1)");
+
+        calcTotalButton.setText("Calculate Total");
+        calcTotalButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                calcTotalButtonActionPerformed(evt);
+            }
+        });
+
+        purchaseButton.setText("Purchase");
+        purchaseButton.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                purchaseButtonActionPerformed(evt);
+            }
+        });
+
+        calcErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+
+        javax.swing.GroupLayout purchasePanelLayout = new javax.swing.GroupLayout(purchasePanel);
+        purchasePanel.setLayout(purchasePanelLayout);
+        purchasePanelLayout.setHorizontalGroup(
+            purchasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(purchasePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(purchasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, purchasePanelLayout.createSequentialGroup()
+                        .addComponent(numCopiesLabel)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(numCopiesField, javax.swing.GroupLayout.PREFERRED_SIZE, 36, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 59, Short.MAX_VALUE)
+                        .addGroup(purchasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(purchaseButton)
+                            .addComponent(calcTotalButton))
+                        .addGap(101, 101, 101))
+                    .addGroup(purchasePanelLayout.createSequentialGroup()
+                        .addComponent(calcErrorLabel)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+        );
+        purchasePanelLayout.setVerticalGroup(
+            purchasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(purchasePanelLayout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(purchasePanelLayout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(numCopiesLabel)
+                    .addComponent(calcTotalButton)
+                    .addComponent(numCopiesField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(calcErrorLabel)
+                .addGap(18, 18, 18)
+                .addComponent(purchaseButton)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+        );
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addContainerGap()
+                        .addComponent(purchasePanel, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addContainerGap())
+                    .addGroup(jPanel1Layout.createSequentialGroup()
                         .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(jPanel1Layout.createSequentialGroup()
                                 .addComponent(idLabel)
                                 .addGap(6, 6, 6)
-                                .addComponent(idField, javax.swing.GroupLayout.DEFAULT_SIZE, 468, Short.MAX_VALUE))
+                                .addComponent(idField))
                             .addGroup(jPanel1Layout.createSequentialGroup()
-                                .addComponent(jLabel1)
+                                .addComponent(titleLabel)
                                 .addGap(42, 42, 42)
                                 .addComponent(titleField))
                             .addGroup(jPanel1Layout.createSequentialGroup()
@@ -146,16 +229,27 @@ public class LibraryUI extends JFrame {
                                     .addComponent(idErrorLabel)
                                     .addComponent(catErrorLabel)
                                     .addComponent(titleErrorLabel))
-                                .addGap(0, 0, Short.MAX_VALUE))))
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addComponent(priceErrorLabel, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(priceButton)
+                        .addGap(255, 255, 255))
                     .addGroup(jPanel1Layout.createSequentialGroup()
-                        .addGap(282, 282, 282)
-                        .addComponent(nextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, Short.MAX_VALUE)))
-                .addContainerGap())
+                        .addComponent(jLabel2)
+                        .addGap(18, 18, 18)
+                        .addComponent(minPriceLabel)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                 .addGap(0, 0, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 556, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(42, 42, 42))
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 556, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(42, 42, 42))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                        .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(287, 287, 287))))
         );
         jPanel1Layout.setVerticalGroup(
             jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -174,15 +268,25 @@ public class LibraryUI extends JFrame {
                 .addComponent(catErrorLabel)
                 .addGap(24, 24, 24)
                 .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(jLabel1)
+                    .addComponent(titleLabel)
                     .addComponent(titleField, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(18, 18, 18)
-                .addComponent(nextButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(titleErrorLabel)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(searchButton, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(27, Short.MAX_VALUE))
+                .addGap(18, 18, 18)
+                .addComponent(priceButton)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(priceErrorLabel)
+                .addGap(18, 18, 18)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel2)
+                    .addComponent(minPriceLabel))
+                .addGap(18, 18, 18)
+                .addComponent(purchasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -193,43 +297,101 @@ public class LibraryUI extends JFrame {
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGroup(layout.createSequentialGroup()
-                .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addGap(43, 43, 43))
+            .addComponent(jPanel1, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    private void nextButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_nextButtonActionPerformed
+    private void searchButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_searchButtonActionPerformed
         idErrorLabel.setText("");       //clearing possible previous errors
         catErrorLabel.setText("");
         titleErrorLabel.setText("");
+        
+        String title = titleField.getText().trim();
+        String category = catComboBox.getSelectedItem().toString();
 
         if (noErrorsFrame1()) {
             //All fields are good, display book in jtable
-            //Book[] books = find_book(titleField.getText().trim());
-        }
-        else {
-            if (catComboBox.getSelectedIndex() <= 0) {
-                catErrorLabel.setText("*Error! Please select a category.");
-            }
-
-            if (titleField.getText().trim().equals("")) {
-                titleErrorLabel.setText("*Error! Title field is required.");
-            }
-            else if (find_book(titleField.getText().trim(), catComboBox.getSelectedItem().toString()).length == 0) {
-                titleErrorLabel.setText("*Error! Book with that title for this category not found.");
-            }
-
-            if (idField.getText().trim().equals("")) {
-                idErrorLabel.setText("*Error! ID field is required.");
-            }
-            else if (find_customer(Integer.parseInt(idField.getText())) == null) {
-                idErrorLabel.setText("*Error! This ID was not found.");
+            Book[] books = find_book(title, category);
+            for (int i = 0; i < books.length; i++) {
+                String bTitle = books[i].title;
+                int bYear = books[i].year;
+                String bLanguage = books[i].language;
+                int bWeight = books[i].weight;
+                
+                bookTable.setValueAt(bTitle, i, 0);
+                bookTable.setValueAt(bYear, i, 1);
+                bookTable.setValueAt(bLanguage, i, 2);
+                bookTable.setValueAt(bWeight, i, 3);
             }
         }
-    }//GEN-LAST:event_nextButtonActionPerformed
+    }//GEN-LAST:event_searchButtonActionPerformed
+
+    private void priceButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_priceButtonActionPerformed
+        priceErrorLabel.setText("");        //resetting the error label
+        
+        if (noErrorsFrame1()) {
+            int selectedRow = bookTable.getSelectedRow();
+
+            if (selectedRow == -1 || selectedRow + 1 > numBooks) { //no row selected or invalid row selected
+                priceErrorLabel.setText("*Error! You must select a valid row to get a price.");
+            }
+            else {
+                String title = bookTable.getValueAt(selectedRow, 0).toString();
+                int year = (int) bookTable.getValueAt(selectedRow, 1);
+                BigDecimal price = min_price ("", title, year);
+                price = price.setScale(2, BigDecimal.ROUND_HALF_EVEN);
+                minPriceLabel.setText(price.toString());
+                //System.out.println ("title: " + title + " year: " + year);
+            }
+        }
+        
+        
+    }//GEN-LAST:event_priceButtonActionPerformed
+
+    private void calcTotalButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calcTotalButtonActionPerformed
+        calcErrorLabel.setText("");
+        BigDecimal minPrice = new BigDecimal(minPriceLabel.getText());        
+        
+        if (noErrorsFrame1()) {
+            if (numCopiesField.getText().trim().equals("")) {          
+                JOptionPane.showMessageDialog(this, "Total: " + minPrice.toString());
+            }
+            else {
+                if (isInt(numCopiesField.getText().trim())) {
+                    BigDecimal numCopies = new BigDecimal(numCopiesField.getText());
+                    BigDecimal total = minPrice.multiply(numCopies); 
+                    JOptionPane.showMessageDialog(this, "Total: " + total.toString());
+                }
+                else {
+                    calcErrorLabel.setText("Error! Number of copies not an integer");
+                }
+            }
+        }
+        
+    }//GEN-LAST:event_calcTotalButtonActionPerformed
+
+    private void purchaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_purchaseButtonActionPerformed
+        calcErrorLabel.setText("");
+        BigDecimal minPrice = new BigDecimal(minPriceLabel.getText());        
+        
+        if (noErrorsFrame1()) {
+            
+            if (numCopiesField.getText().trim().equals("")) {
+                //TODO
+            }
+            else {
+                if (isInt(numCopiesField.getText().trim())) {
+                    BigDecimal numCopies = new BigDecimal(numCopiesField.getText());
+                    BigDecimal total = minPrice.multiply(numCopies); 
+                }
+                else {
+                    calcErrorLabel.setText("Error! Number of copies not an integer");
+                }
+            }
+        }
+    }//GEN-LAST:event_purchaseButtonActionPerformed
 
     /**
      * @param args the command line arguments
@@ -351,6 +513,7 @@ public class LibraryUI extends JFrame {
             System.out.println(e.toString());
         }
         
+        numBooks = books.size();
         Book[] booksArray = new Book[books.size()];
         booksArray = books.toArray(booksArray);
         return booksArray;
@@ -374,9 +537,9 @@ public class LibraryUI extends JFrame {
             answers = querySt.executeQuery();
 
             if (answers.next()) {
-                custID = answers.getInt("cid");
-                custName = answers.getString("name");
-                custCity = answers.getString("city");
+                int custID = answers.getInt("cid");
+                String custName = answers.getString("name");
+                String custCity = answers.getString("city");
                 c = new Customer (custID, custName, custCity);
             }
             
@@ -389,6 +552,82 @@ public class LibraryUI extends JFrame {
         return c;
     }
     
+    public void insert_purchase (int cid, String club, String title, int year, int quantity) {
+        String statementText = "";
+        PreparedStatement querySt = null;
+        ResultSet answers = null;
+
+        statementText = 
+                    "INSERT INTO yrb_purchase (cid, club, title, year, when, qnty) " + 
+                    "VALUES (?, ?, ?, ?, ?, ?)";
+
+        try {
+            querySt = conDB.prepareStatement (statementText);	
+            querySt.setInt(1, cid);
+            querySt.setString(2, club);
+            querySt.setString(3, title);
+            querySt.setInt(4, year);
+            Timestamp now = new Timestamp(System.currentTimeMillis());
+            querySt.setTimestamp(5, now);
+            querySt.setInt(6, quantity);
+            
+            answers = querySt.executeQuery();
+          
+            answers.close();
+            querySt.close();
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+    }
+    
+    public static boolean isInt(String s){
+        for(int i = 0; i < s.length(); i++){
+            if(!Character.isDigit(s.charAt(i))){
+                 return false;
+            }
+        }
+        return true;
+    }
+    
+    public BigDecimal min_price (String category, String title, int year) {
+        String queryText = "";
+        PreparedStatement querySt = null;
+        ResultSet answers = null;
+        
+        Double price = -1.0;
+        
+        queryText = 
+                    "SELECT club, price " +
+                    "FROM yrb_offer " +
+                    "WHERE price = (SELECT min(price) " +
+                    "               FROM yrb_offer " + 
+                    "               WHERE title = ? and year = ?) " +
+                    "and title = ? and year = ?";
+
+        try {
+            querySt = conDB.prepareStatement (queryText);	
+            querySt.setString(1, title);
+            querySt.setInt(2, year);
+            querySt.setString(3, title);
+            querySt.setInt(4, year);
+            
+            answers = querySt.executeQuery();
+
+            if (answers.next()) {
+                price = answers.getDouble("price");
+                club = answers.getString("club");
+            }
+            
+            answers.close();
+            querySt.close();
+        }
+        catch (Exception e) {
+            System.out.println(e.toString());
+        }
+        return new BigDecimal(price);
+    }
+    
     public boolean noErrorsFrame1() {
         //checks to see if there are errors in the first page
         boolean result = catComboBox.getSelectedIndex() > 0 &&
@@ -396,23 +635,55 @@ public class LibraryUI extends JFrame {
                          !idField.getText().trim().equals("") && 
                          find_customer(Integer.parseInt(idField.getText())) != null &&
                          find_book(titleField.getText(), catComboBox.getSelectedItem().toString()).length != 0;
+        
+        if (!result) {
+            String title = titleField.getText().trim();
+            String category = catComboBox.getSelectedItem().toString();
+            if (catComboBox.getSelectedIndex() <= 0) {
+                catErrorLabel.setText("*Error! Please select a category.");
+            }
+
+            if (title.equals("")) {
+                titleErrorLabel.setText("*Error! Title field is required.");
+            }
+            else if (find_book(title, category).length == 0) {
+                titleErrorLabel.setText("*Error! Book with that title for this category not found.");
+            }
+
+            if (idField.getText().trim().equals("")) {
+                idErrorLabel.setText("*Error! ID field is required.");
+            }
+            else if (find_customer(Integer.parseInt(idField.getText())) == null) {
+                idErrorLabel.setText("*Error! This ID was not found.");
+            }
+        }
                          
         return result;
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable bookTable;
+    private javax.swing.JLabel calcErrorLabel;
+    private javax.swing.JButton calcTotalButton;
     private javax.swing.JComboBox catComboBox;
     private javax.swing.JLabel catErrorLabel;
     private javax.swing.JLabel catLabel;
     private javax.swing.JLabel idErrorLabel;
     private javax.swing.JTextField idField;
     private javax.swing.JLabel idLabel;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
-    private javax.swing.JButton nextButton;
+    private javax.swing.JLabel minPriceLabel;
+    private javax.swing.JTextField numCopiesField;
+    private javax.swing.JLabel numCopiesLabel;
+    private javax.swing.JButton priceButton;
+    private javax.swing.JLabel priceErrorLabel;
+    private javax.swing.JButton purchaseButton;
+    private javax.swing.JPanel purchasePanel;
+    private javax.swing.JButton searchButton;
     private javax.swing.JLabel titleErrorLabel;
     private javax.swing.JTextField titleField;
+    private javax.swing.JLabel titleLabel;
     // End of variables declaration//GEN-END:variables
 }
