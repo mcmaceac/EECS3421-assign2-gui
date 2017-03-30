@@ -12,7 +12,6 @@ import java.math.BigDecimal;
 import java.net.*;
 import java.sql.*;
 import java.sql.Timestamp;
-import java.util.Date;
 import java.util.ArrayList;
 import javax.swing.*;
 public class LibraryUI extends JFrame {
@@ -49,9 +48,6 @@ public class LibraryUI extends JFrame {
     private static String club;
     
     private static int numBooks;
-    
-    //private static String category;
-    //private static String title;
     
     /**
      * Creates new form LibraryUI
@@ -92,6 +88,7 @@ public class LibraryUI extends JFrame {
         numCopiesField = new javax.swing.JTextField();
         purchaseButton = new javax.swing.JButton();
         calcErrorLabel = new javax.swing.JLabel();
+        findPriceErrorLabel = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -200,6 +197,8 @@ public class LibraryUI extends JFrame {
                 .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
         );
 
+        findPriceErrorLabel.setForeground(new java.awt.Color(255, 0, 0));
+
         javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
         jPanel1.setLayout(jPanel1Layout);
         jPanel1Layout.setHorizontalGroup(
@@ -235,7 +234,9 @@ public class LibraryUI extends JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(priceButton)
-                        .addGap(255, 255, 255))
+                        .addGap(59, 59, 59)
+                        .addComponent(findPriceErrorLabel)
+                        .addGap(198, 198, 198))
                     .addGroup(jPanel1Layout.createSequentialGroup()
                         .addComponent(jLabel2)
                         .addGap(18, 18, 18)
@@ -277,7 +278,9 @@ public class LibraryUI extends JFrame {
                 .addGap(18, 18, 18)
                 .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 97, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
-                .addComponent(priceButton)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(priceButton)
+                    .addComponent(findPriceErrorLabel))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(priceErrorLabel)
                 .addGap(18, 18, 18)
@@ -286,7 +289,7 @@ public class LibraryUI extends JFrame {
                     .addComponent(minPriceLabel))
                 .addGap(18, 18, 18)
                 .addComponent(purchasePanel, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                .addContainerGap(69, Short.MAX_VALUE))
         );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
@@ -352,9 +355,10 @@ public class LibraryUI extends JFrame {
 
     private void calcTotalButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_calcTotalButtonActionPerformed
         calcErrorLabel.setText("");
-        BigDecimal minPrice = new BigDecimal(minPriceLabel.getText());        
+               
         
-        if (noErrorsFrame1()) {
+        if (noErrorsFrame1() && noErrorsFrame2()) {
+            BigDecimal minPrice = new BigDecimal(minPriceLabel.getText()); 
             if (numCopiesField.getText().trim().equals("")) {          
                 JOptionPane.showMessageDialog(this, "Total: " + minPrice.toString());
             }
@@ -374,17 +378,30 @@ public class LibraryUI extends JFrame {
 
     private void purchaseButtonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_purchaseButtonActionPerformed
         calcErrorLabel.setText("");
-        BigDecimal minPrice = new BigDecimal(minPriceLabel.getText());        
+               
         
-        if (noErrorsFrame1()) {
+        if (noErrorsFrame1() && noErrorsFrame2()) {
+            BigDecimal minPrice = new BigDecimal(minPriceLabel.getText()); 
+            int cid = Integer.parseInt(idField.getText());
+            String title = bookTable.getValueAt(bookTable.getSelectedRow(), 0).toString();
+            int year = Integer.parseInt(bookTable.getValueAt(bookTable.getSelectedRow(), 1).toString());
+            int qnty;
             
             if (numCopiesField.getText().trim().equals("")) {
-                //TODO
+                qnty = 1;
+                insert_purchase(cid, club, title, year, qnty);
+                JOptionPane.showMessageDialog(this, "Thanks for your purchase!");
+                System.exit(0);
             }
             else {
                 if (isInt(numCopiesField.getText().trim())) {
                     BigDecimal numCopies = new BigDecimal(numCopiesField.getText());
                     BigDecimal total = minPrice.multiply(numCopies); 
+                    
+                    qnty = Integer.parseInt(numCopiesField.getText());
+                    insert_purchase(cid, club, title, year, qnty);
+                    JOptionPane.showMessageDialog(this, "Thanks for your purchase!");
+                    System.exit(0);
                 }
                 else {
                     calcErrorLabel.setText("Error! Number of copies not an integer");
@@ -571,9 +588,7 @@ public class LibraryUI extends JFrame {
             querySt.setTimestamp(5, now);
             querySt.setInt(6, quantity);
             
-            answers = querySt.executeQuery();
-          
-            answers.close();
+            querySt.executeUpdate();
             querySt.close();
         }
         catch (Exception e) {
@@ -596,21 +611,22 @@ public class LibraryUI extends JFrame {
         ResultSet answers = null;
         
         Double price = -1.0;
+        int cid = Integer.parseInt(idField.getText());
         
         queryText = 
-                    "SELECT club, price " +
-                    "FROM yrb_offer " +
-                    "WHERE price = (SELECT min(price) " +
-                    "               FROM yrb_offer " + 
-                    "               WHERE title = ? and year = ?) " +
-                    "and title = ? and year = ?";
+                    "SELECT O.price, O.club " +
+                    "FROM yrb_offer O, yrb_member M " +
+                    "WHERE title = ? " + 
+                    "and year = ? " +
+                    "and O.club = M.club " + //make sure they are a member of the club
+                    "and M.cid = ? " +
+                    "order by price desc limit 1,1"; //find the minimum price
 
         try {
             querySt = conDB.prepareStatement (queryText);	
             querySt.setString(1, title);
             querySt.setInt(2, year);
-            querySt.setString(3, title);
-            querySt.setInt(4, year);
+            querySt.setInt(3, cid);
             
             answers = querySt.executeQuery();
 
@@ -660,6 +676,26 @@ public class LibraryUI extends JFrame {
                          
         return result;
     }
+    
+    public boolean noErrorsFrame2() {
+        boolean result = false;
+        int selectedRow = bookTable.getSelectedRow();
+
+        result = !(selectedRow == -1 || selectedRow + 1 > numBooks) &&
+                 !minPriceLabel.getText().equals("");
+        
+        if (!result) {
+            if (selectedRow == -1 || selectedRow + 1 > numBooks) {
+                priceErrorLabel.setText("*Error! You must select a valid row to get a price.");
+            }
+            
+            if (minPriceLabel.getText().equals("")) {
+                findPriceErrorLabel.setText("*Error! Press find minimum price first.");
+            }
+        }
+        
+        return result;
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JTable bookTable;
@@ -668,6 +704,7 @@ public class LibraryUI extends JFrame {
     private javax.swing.JComboBox catComboBox;
     private javax.swing.JLabel catErrorLabel;
     private javax.swing.JLabel catLabel;
+    private javax.swing.JLabel findPriceErrorLabel;
     private javax.swing.JLabel idErrorLabel;
     private javax.swing.JTextField idField;
     private javax.swing.JLabel idLabel;
